@@ -1,4 +1,4 @@
-
+from utils import APIException
 """
 update this file to implement the following already declared methods:
 - add_member: Should add a member to the self._members list
@@ -8,28 +8,83 @@ update this file to implement the following already declared methods:
 """
 from random import randint
 
-class FamilyStructure:
-    def __init__(self, last_name):
-        self.last_name = last_name
-
-        # example list of members
-        self._members = []
-
+class Base:
+    # base class to inherit base methods
+    
     # read-only: Use this method to generate random members ID's when adding members into the list
     def _generateId(self):
         return randint(0, 99999999)
 
+
+class Member(Base):
+    # represents a family member linked to a specific family
+    
+    def __init__(self, **kwargs):
+        self.id = kwargs.get('id', self._generateId())
+        self.first_name = kwargs.get('first_name')
+        self.age = kwargs.get('age')
+        self.lucky_numbers = kwargs.get('lucky_numbers')
+        self.family_id = kwargs.get('family_id')
+
+    @classmethod
+    def create(cls, family, **kwargs):
+        # validate input
+        if kwargs.get('first_name') is None:
+            raise APIException('missing first name', 400)
+        if kwargs.get('age') is None:
+            raise APIException('missing age', 400)
+        if (
+            kwargs.get('lucky_numbers') is None or
+            not isinstance(kwargs.get('lucky_numbers'), list) 
+        ):
+            kwargs.update(lucky_numbers=[])
+        # create and return Member new instance
+        return cls(
+            **kwargs,
+            family_id=family.id
+        )
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "first_name": self.first_name,
+            "age": self.age,
+            "lucky_numbers": self.lucky_numbers
+        }
+
+
+class FamilyStructure(Base):
+    def __init__(self, last_name):
+        self.id = self._generateId()
+        self.last_name = last_name
+        self._members = []
+
     def add_member(self, member):
-        # fill this method and update the return
-        pass
+        # creates new member instance
+        new_member = Member.create(self, **member)
+        # updates class property _members
+        self._members.append(new_member)
+        # returns member added
+        return new_member
 
     def delete_member(self, id):
         # fill this method and update the return
-        pass
+        # updates _members value ignoring member 
+        # with id == id from the list
+        self._members = list(filter(
+            lambda member: int(member.id) != id,
+            self._members
+        ))
+        # returns current length for _members property
+        return len(self._members)
 
     def get_member(self, id):
         # fill this method and update the return
-        pass
+        for member in self._members:
+            if member.id == id:
+                return member
+        # if no member with such id:
+        raise APIException("no such member", 404)
 
     # this method is done, it returns a list with all the family members
     def get_all_members(self):
