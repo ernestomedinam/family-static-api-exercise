@@ -24,7 +24,7 @@ class Member(Base):
         self.first_name = kwargs.get('first_name')
         self.age = kwargs.get('age')
         self.lucky_numbers = kwargs.get('lucky_numbers')
-        self.family_id = kwargs.get('family_id')
+        self.family = kwargs.get('family')
 
     @classmethod
     def create(cls, family, **kwargs):
@@ -41,13 +41,14 @@ class Member(Base):
         # create and return Member new instance
         return cls(
             **kwargs,
-            family_id=family.id
+            family=family
         )
 
     def serialize(self):
         return {
             "id": self.id,
             "first_name": self.first_name,
+            "last_name": self.family.last_name,
             "age": self.age,
             "lucky_numbers": self.lucky_numbers
         }
